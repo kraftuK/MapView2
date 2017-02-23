@@ -18,8 +18,8 @@ public class MapView extends View {
 
     private static int TILE_SIZE_X = 256;
     private static int TILE_SIZE_Y = 256;
-    private static int COUNT_TILE_X = 10;
-    private static int COUNT_TILE_Y = 10;
+    private static int COUNT_TILE_X = 50;
+    private static int COUNT_TILE_Y = 50;
 
     float xTranslate = 0;
     float yTranslate = 0;
@@ -29,6 +29,7 @@ public class MapView extends View {
 
     RectF sourceRect = null;
     RectF frameRect = null;
+    RectF drawTile = new RectF();
 
     Paint paint;
 
@@ -57,8 +58,10 @@ public class MapView extends View {
     public void init(){
         paint = new Paint();
         paint.setColor(Color.BLACK);
-        paint.setStrokeWidth(10);
-        sourceRect = new RectF(0,0,TILE_SIZE_X * 10,TILE_SIZE_Y * 10);
+        paint.setStrokeWidth(2);
+        paint.setTextSize(20);
+        paint.setStyle(Paint.Style.STROKE);
+        sourceRect = new RectF(0,0,TILE_SIZE_X * COUNT_TILE_X,TILE_SIZE_Y * COUNT_TILE_Y);
 
     }
     @Override
@@ -89,49 +92,82 @@ public class MapView extends View {
     public void setTranslate(float dx,float dy){
         Log.d("translate", String.format("----"));
         Log.d("translate", String.format("dx:%f dy:%f",dx,dy));
+        sourceRect.left = sourceRect.left + dx;
+        sourceRect.right = sourceRect.right + dx;
+        sourceRect.top = sourceRect.top + dy;
+        sourceRect.bottom = sourceRect.bottom + dy;
 
-        frameRect.left = frameRect.left + dx;
-        frameRect.right = frameRect.right + dx;
-        frameRect.top = frameRect.top + dy;
-        frameRect.bottom = frameRect.bottom + dy;
-        Log.d("translate", String.format("new vrect:%s", frameRect));
+        //Log.d("translate", String.format("new vrect:%s", frameRect));
         checkMoveBounds();
-        xTranslate = frameRect.left;
-        yTranslate = frameRect.top;
+        //xTranslate = sourceRect.left;
+        //yTranslate = sourceRect.top;
         invalidate();
         Log.d("translate", String.format("vrect:%s srect%s", frameRect, sourceRect));
     }
 
     private void checkMoveBounds() {
-        float diff = frameRect.left - sourceRect.left;
-        if (diff < 0) {
-            Log.d("translate", String.format("left:%f",diff));
-            frameRect.left = frameRect.left - diff;
-            frameRect.right = frameRect.right - diff;
+        float diff = sourceRect.left - frameRect.left;
+        if (diff > 0) {
+            sourceRect.left = sourceRect.left - diff;
+            sourceRect.right = sourceRect.right - diff;
 
         }
-        diff = frameRect.right - sourceRect.right;
-        if (diff > 0) {
-            frameRect.left = frameRect.left - diff;
-            frameRect.right = frameRect.right - diff;
-        }
-        diff = frameRect.top - sourceRect.top;
+        diff = sourceRect.right - frameRect.right;
         if (diff < 0) {
-            frameRect.top = frameRect.top - diff;
-            frameRect.bottom = frameRect.bottom - diff;
+            sourceRect.left = sourceRect.left - diff;
+            sourceRect.right = sourceRect.right - diff;
         }
-        diff = frameRect.bottom - sourceRect.bottom;
+        diff = sourceRect.top - frameRect.top;
         if (diff > 0) {
-            frameRect.top = frameRect.top - diff;
-            frameRect.bottom = frameRect.bottom - diff;
+            sourceRect.top = sourceRect.top - diff;
+            sourceRect.bottom = sourceRect.bottom - diff;
+        }
+        diff = sourceRect.bottom - frameRect.bottom;
+        if (diff < 0) {
+            sourceRect.top = sourceRect.top - diff;
+            sourceRect.bottom = sourceRect.bottom - diff;
         }
 
-        Log.d("translate", String.format("vrect:%s srect%s", frameRect, sourceRect));
+        //Log.d("translate", String.format("vrect:%s srect%s", frameRect, sourceRect));
+    }
+
+    public int getRawX(float x){
+
+        return (int) x / TILE_SIZE_X;
+    }
+
+    public int getRawY(float y){
+        return (int) y / TILE_SIZE_Y;
+    }
+
+    public float getLocationTileX(int tileX){
+        return tileX * TILE_SIZE_X;
+    }
+
+    public float getLocationTileY(int tileY){
+        return tileY * TILE_SIZE_Y;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.drawCircle(xTranslate,yTranslate,30,paint);
+        canvas.drawCircle(sourceRect.centerX(),sourceRect.centerY(),100f,paint);
+
+
+        float drawTileX = sourceRect.left;
+        float drawTileY = sourceRect.top;
+
+        while(drawTileX < sourceRect.right){
+
+            while(drawTileY < sourceRect.bottom){
+                drawTile.set(drawTileX,drawTileY,drawTileX + TILE_SIZE_X,drawTileY + TILE_SIZE_Y);
+                canvas.drawRect(drawTile,paint);
+                canvas.drawText(String.format("%d %d",(int)drawTileX,(int)drawTileY),drawTile.centerX(),drawTile.centerY(),paint);
+                drawTileY = drawTileY + TILE_SIZE_Y;
+            }
+            drawTileX = drawTileX + TILE_SIZE_X;
+            drawTileY = sourceRect.top;
+        }
+
     }
 }
