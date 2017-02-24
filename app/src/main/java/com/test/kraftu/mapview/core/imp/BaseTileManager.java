@@ -9,8 +9,8 @@ import android.util.Log;
 
 import com.test.kraftu.mapview.cache.DiskCache;
 import com.test.kraftu.mapview.cache.MemoryCache;
+import com.test.kraftu.mapview.cache.imp.LastUsageMemoryCache;
 import com.test.kraftu.mapview.cache.imp.LruMemoryCache;
-import com.test.kraftu.mapview.cache.imp.TestLruMemoryCache;
 import com.test.kraftu.mapview.cache.imp.UnlimitedDiskCache;
 import com.test.kraftu.mapview.core.TileManager;
 import com.test.kraftu.mapview.core.TileManagerListener;
@@ -48,7 +48,7 @@ public class BaseTileManager implements TileManager {
 
     public BaseTileManager(Context context) {
         mTileRes = new Opencyclemap();
-        mMemoryCache = new TestLruMemoryCache(SIZE_MEMORY_CACHE);
+        mMemoryCache = new LastUsageMemoryCache(SIZE_MEMORY_CACHE);
         mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
         mExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
                 new MapThreadFactory(TAG + "_Thread"));
