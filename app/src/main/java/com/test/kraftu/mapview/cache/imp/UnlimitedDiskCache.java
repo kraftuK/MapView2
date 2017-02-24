@@ -11,14 +11,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 
-public class BaseDiskCache implements DiskCache {
+public class UnlimitedDiskCache implements DiskCache {
     public static final Bitmap.CompressFormat COMPRESS_FORMAT = Bitmap.CompressFormat.PNG;
     public static final int COMPRESS_QUALITY = 100;
     public static final String NAME_CACHE_DIR = "tileMap";
 
     protected final File cacheDir;
 
-    public BaseDiskCache(File rootDir) {
+    public UnlimitedDiskCache(File rootDir) {
         this.cacheDir = new File(rootDir,"/"+NAME_CACHE_DIR);
     }
 

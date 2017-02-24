@@ -4,7 +4,7 @@ package com.test.kraftu.mapview.utils;
 import java.util.concurrent.ThreadFactory;
 
 public class MapThreadFactory implements ThreadFactory{
-    public static final int THREAD_PRIORITY = Thread.NORM_PRIORITY - 2;
+    public static final int THREAD_PRIORITY = Thread.MIN_PRIORITY;
 
     private String mName;
 

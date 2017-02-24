@@ -8,9 +8,8 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.test.kraftu.mapview.cache.DiskCache;
-import com.test.kraftu.mapview.cache.imp.BaseDiskCache;
-import com.test.kraftu.mapview.cache.imp.BaseMemoryCache;
 import com.test.kraftu.mapview.cache.MemoryCache;
+import com.test.kraftu.mapview.cache.imp.LruMemoryCache;
 import com.test.kraftu.mapview.core.TileManager;
 import com.test.kraftu.mapview.core.TileManagerListener;
 import com.test.kraftu.mapview.network.imp.Opencyclemap;
@@ -27,9 +26,9 @@ import java.util.concurrent.Executors;
 
 
 public class BaseTileManager implements TileManager {
-    public static final int THREAD_POOL_SIZE = 3;
-    public static final int SIZE_MEMORY_CACHE = 30 * 1024 * 1024;
-    public static final boolean DEBUG = true;
+    public static final int THREAD_POOL_SIZE = 2;
+    public static final int SIZE_MEMORY_CACHE = 20 * 1024 * 1024;
+    public static final boolean DEBUG = false;
     public static final String TAG = "BaseTileManager";
 
     private Handler mHandler = new Handler(Looper.myLooper());
@@ -47,22 +46,21 @@ public class BaseTileManager implements TileManager {
 
     public BaseTileManager(Context context) {
         mTileRes = new Opencyclemap();
-        mMemoryCache = new BaseMemoryCache(SIZE_MEMORY_CACHE);
-        mDiskCache = new BaseDiskCache(context.getCacheDir());
+        mMemoryCache = new LruMemoryCache(SIZE_MEMORY_CACHE);
+        //mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
         mExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
-                new MapThreadFactory(TAG+"_Thread"));
+                new MapThreadFactory(TAG + "_Thread"));
     }
 
     @Override
     public Bitmap getBitmapTile(int tileX, int tileY) {
         Integer tileId = getTileId(tileX,tileY);
-        Bitmap bitmap = mMemoryCache.get(tileId.toString());
+        Bitmap bitmap = mMemoryCache.get(tileId);
 
         if(bitmap == null && !mListTask.containsKey(tileId)){
-            LoadBitmap loadBitmap = new LoadBitmap(tileId, mTileRes.getUriForTile(tileX,tileY));
+            LoadBitmap loadBitmap = new LoadBitmap(tileId,tileX,tileY);
             mListTask.put(tileId,loadBitmap);
             mExecutor.execute(loadBitmap);
-
             if(DEBUG) Log.d(TAG,String.format("Create %s",loadBitmap.toString()));
         }
 
@@ -113,19 +111,24 @@ public class BaseTileManager implements TileManager {
     private class LoadBitmap implements Runnable{
         private static final String TAG = "LoadBitmap";
         private Integer tileId;
+        private Integer tileX;
+        private Integer tileY;
         private String url;
         private boolean isCancel;
         private Bitmap mBitmap;
 
-        public LoadBitmap(int tileId, String url) {
+        public LoadBitmap(int tileId, int tileX, int tileY) {
             this.tileId = tileId;
-            this.url = url;
+            this.tileX = tileX;
+            this.tileY = tileY;
         }
         @Override
         public void run() {
             try {
+
                 checkCancel();
                 //Try loadTile from sd card cache
+                url = mTileRes.getUriForTile(tileX,tileY);
 
                 if (mDiskCache != null) {
                     File file = mDiskCache.get(url);
@@ -160,7 +163,7 @@ public class BaseTileManager implements TileManager {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    mMemoryCache.put(id.toString(), bitmap);
+                    mMemoryCache.put(id, bitmap);
                     notifyLoadedNewTile(id);
                 }
             });

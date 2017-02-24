@@ -8,19 +8,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-public class BaseMemoryCache implements MemoryCache {
-    private final LinkedHashMap<String,Bitmap> map;
+public class LruMemoryCache implements MemoryCache {
+    private final LinkedHashMap<Integer,Bitmap> map;
     private final int maxSize;
     private int size;
 
-    public BaseMemoryCache(int maxSize) {
+    public LruMemoryCache(int maxSize) {
         if(maxSize < 0)  throw new IllegalArgumentException("maxSize <= 0");
         this.maxSize = maxSize;
         map = new LinkedHashMap<>();
     }
 
     @Override
-    public boolean put(String key, Bitmap value) {
+    public boolean put(Integer key, Bitmap value) {
         if (key == null || value == null) {
             throw new NullPointerException("key or value is null");
         }
@@ -37,7 +37,7 @@ public class BaseMemoryCache implements MemoryCache {
     }
 
     @Override
-    public Bitmap get(String key) {
+    public Bitmap get(Integer key) {
         if (key == null) {
             throw new NullPointerException("key == null");
         }
@@ -48,7 +48,7 @@ public class BaseMemoryCache implements MemoryCache {
     }
 
     @Override
-    public Bitmap remove(String key) {
+    public Bitmap remove(Integer key) {
         if (key == null) {
             throw new NullPointerException("key == null");
         }
@@ -63,7 +63,7 @@ public class BaseMemoryCache implements MemoryCache {
 
     private void trimToSize(int maxSize) {
         while (true) {
-            String key;
+            Integer key;
             Bitmap value;
             synchronized (this) {
                 if (size < 0 || (map.isEmpty() && size != 0)) {
@@ -74,7 +74,7 @@ public class BaseMemoryCache implements MemoryCache {
                     break;
                 }
 
-                Map.Entry<String, Bitmap> toEvict = map.entrySet().iterator().next();
+                Map.Entry<Integer, Bitmap> toEvict = map.entrySet().iterator().next();
                 if (toEvict == null) {
                     break;
                 }
@@ -97,7 +97,7 @@ public class BaseMemoryCache implements MemoryCache {
 
     @Override
     public String toString() {
-        return "BaseMemoryCache{" +
+        return "LruMemoryCache{" +
                 "maxSize=" + maxSize +
                 ", size=" + size +
                 '}';

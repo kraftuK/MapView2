@@ -4,8 +4,8 @@ import android.graphics.Bitmap;
 
 
 public interface MemoryCache{
-    boolean put(String key,Bitmap value);
-    Bitmap get(String key);
-    Bitmap remove(String key);
+    boolean put(Integer key,Bitmap value);
+    Bitmap get(Integer key);
+    Bitmap remove(Integer key);
     void clear();
 }

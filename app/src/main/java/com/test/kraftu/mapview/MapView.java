@@ -23,7 +23,6 @@ public class MapView extends View implements TileManagerListener {
 
     RectF sourceRect = null;
     RectF frameRect = null;
-    RectF drawTile = null;
 
     Paint paint;
     TileManager tileManager;
@@ -67,7 +66,6 @@ public class MapView extends View implements TileManagerListener {
         tileCountX = tileResource.getCountTileX();
         tileCountY = tileResource.getCountTileY();
 
-        drawTile = new RectF();
         sourceRect = new RectF(0, 0, tileSizeX * tileCountX, tileSizeY * tileCountY);
 
         paint = new Paint();
@@ -83,6 +81,13 @@ public class MapView extends View implements TileManagerListener {
                 return true;
             }
         });
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                setTranslate(-5,-5);
+                postDelayed(this,20);
+            }
+        },1000);
     }
 
     @Override
@@ -148,46 +153,47 @@ public class MapView extends View implements TileManagerListener {
         return tileY * tileSizeY + sourceRect.top;
     }
 
+    private int mLastTileX;
+    private int mLastTileY;
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
         if(tileManager == null || sourceRect == null || frameRect == null) return;
 
-        int firstTileX = getTileRawX(0);
-        int firstTileY = getTileRawY(0);
+        final int firstTileX = getTileRawX(0);
+        final int firstTileY = getTileRawY(0);
+        final float firstEdgeTileX = getLocationTileX(firstTileX);
+        final float firstEdgeTileY =  getLocationTileY(firstTileY);
 
+        int currentTileX = firstTileX;
+        int currentTileY = firstTileY;
 
-        float startTileX = getLocationTileX(firstTileX);
-        float startTileY = getLocationTileY(firstTileY);
-
+        float startTileX = firstEdgeTileX;
+        float startTileY = firstEdgeTileY;
         float endTileX = Math.min(frameRect.right, sourceRect.right);
         float endTileY = Math.min(frameRect.bottom, sourceRect.bottom);
 
-        Bitmap tileBitmap;
-        int currentTileX;
-        int currentTileY;
-
+        Bitmap tileBitmap = null;
         while (startTileY < endTileY) {
             while (startTileX < endTileX) {
-                drawTile.set(startTileX, startTileY, startTileX + tileSizeX, startTileY + tileSizeY);
-
-                currentTileX = getTileRawX(drawTile.centerX());
-                currentTileY = getTileRawY(drawTile.centerY());
 
                 tileBitmap = tileManager.getBitmapTile(currentTileX, currentTileY);
                 if (tileBitmap != null)
                     canvas.drawBitmap(tileBitmap, startTileX, startTileY, paint);
-
                 if (DEBUG) {
-                    canvas.drawRect(drawTile, paint);
+                    canvas.drawRect(startTileX, startTileY, startTileX + tileSizeX, startTileY + tileSizeY, paint);
                     canvas.drawText(String.format("%d", tileManager.getTileId(currentTileX, currentTileY))
-                            , drawTile.centerX(), drawTile.centerY(), paint);
+                            , startTileX, startTileY - 10, paint);
                 }
+                currentTileX = currentTileX + 1;
                 startTileX = startTileX + tileSizeX;
             }
-            startTileX = getLocationTileX(firstTileX);
+
+            currentTileX = firstTileX;
+            currentTileY = currentTileY + 1;
+
+            startTileX = firstEdgeTileX;
             startTileY = startTileY + tileSizeY;
         }
 
