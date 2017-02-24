@@ -3,7 +3,6 @@ package com.test.kraftu.mapview.core;
 
 import android.graphics.Bitmap;
 
-import com.test.kraftu.mapview.core.imp.BaseTileManager;
 import com.test.kraftu.mapview.network.TileResource;
 
 public interface TileManager {
@@ -11,5 +10,6 @@ public interface TileManager {
     int getTileId(int tileX, int tileY);
     TileResource getTileDownloader();
     void setTileManagerListener(TileManagerListener listener);
+    void cuncelLoad();
     void clearCache();
 }

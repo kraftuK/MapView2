@@ -17,9 +17,6 @@ import com.test.kraftu.mapview.core.TileManagerListener;
 import com.test.kraftu.mapview.core.imp.BaseTileManager;
 import com.test.kraftu.mapview.network.TileResource;
 
-/**
- * Created by kraftu on 23.02.17.
- */
 public class MapView extends View implements TileManagerListener {
     public static final String TAG = "MapView";
     public static final boolean DEBUG = true;
@@ -90,6 +87,9 @@ public class MapView extends View implements TileManagerListener {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if(event.getAction() == MotionEvent.ACTION_DOWN){
+            tileManager.cuncelLoad();
+        }
         gestureDetector.onTouchEvent(event);
         return true;
     }
