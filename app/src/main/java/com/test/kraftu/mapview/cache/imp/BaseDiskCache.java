@@ -10,18 +10,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- * Created by Слава on 24.02.2017.
- */
 
 public class BaseDiskCache implements DiskCache {
     public static final Bitmap.CompressFormat COMPRESS_FORMAT = Bitmap.CompressFormat.PNG;
     public static final int COMPRESS_QUALITY = 100;
+    public static final String NAME_CACHE_DIR = "tileMap";
 
     protected final File cacheDir;
 
-    public BaseDiskCache(File cacheDir) {
-        this.cacheDir = cacheDir;
+    public BaseDiskCache(File rootDir) {
+        this.cacheDir = new File(rootDir,"/"+NAME_CACHE_DIR);
     }
 
     @Override

@@ -8,12 +8,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-public class LruMemoryCache implements MemoryCache {
+public class BaseMemoryCache implements MemoryCache {
     private final LinkedHashMap<String,Bitmap> map;
     private final int maxSize;
     private int size;
 
-    public LruMemoryCache(int maxSize) {
+    public BaseMemoryCache(int maxSize) {
         if(maxSize < 0)  throw new IllegalArgumentException("maxSize <= 0");
         this.maxSize = maxSize;
         map = new LinkedHashMap<>();
@@ -97,7 +97,7 @@ public class LruMemoryCache implements MemoryCache {
 
     @Override
     public String toString() {
-        return "LruMemoryCache{" +
+        return "BaseMemoryCache{" +
                 "maxSize=" + maxSize +
                 ", size=" + size +
                 '}';
