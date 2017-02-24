@@ -88,7 +88,7 @@ public class MapView extends View implements TileManagerListener {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if(event.getAction() == MotionEvent.ACTION_DOWN){
-            tileManager.cuncelLoad();
+            tileManager.cancelLoad();
         }
         gestureDetector.onTouchEvent(event);
         return true;

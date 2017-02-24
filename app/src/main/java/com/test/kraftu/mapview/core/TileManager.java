@@ -10,6 +10,6 @@ public interface TileManager {
     int getTileId(int tileX, int tileY);
     TileResource getTileDownloader();
     void setTileManagerListener(TileManagerListener listener);
-    void cuncelLoad();
+    void cancelLoad();
     void clearCache();
 }

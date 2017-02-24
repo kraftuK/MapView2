@@ -10,15 +10,11 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Created by Слава on 23.02.2017.
- */
-
 public class Opencyclemap implements TileResource {
     private static int TILE_SIZE_X = 256;
     private static int TILE_SIZE_Y = 256;
-    private static int COUNT_TILE_X = 20;
-    private static int COUNT_TILE_Y = 20;
+    private static int COUNT_TILE_X = 100;
+    private static int COUNT_TILE_Y = 100;
 
     private static int TILE_OFFSET_X = 33198;
     private static int TILE_OFFSET_Y = 22539;
