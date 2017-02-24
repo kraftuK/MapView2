@@ -2,6 +2,7 @@ package com.test.kraftu.mapview;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -19,7 +20,7 @@ import com.test.kraftu.mapview.network.TileResource;
 
 public class MapView extends View implements TileManagerListener {
     public static final String TAG = "MapView";
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     RectF sourceRect = null;
     RectF frameRect = null;
@@ -33,6 +34,7 @@ public class MapView extends View implements TileManagerListener {
     private int tileCountX;
     private int tileCountY;
 
+    private Bitmap bitmap;
     public MapView(Context context) {
         super(context);
         init();
@@ -81,13 +83,16 @@ public class MapView extends View implements TileManagerListener {
                 return true;
             }
         });
-        postDelayed(new Runnable() {
+        /*postDelayed(new Runnable() {
             @Override
             public void run() {
                 setTranslate(-5,-5);
                 postDelayed(this,20);
             }
-        },1000);
+        },1000);*/
+
+        bitmap = Bitmap.createBitmap(256, 256,
+                Bitmap.Config.ARGB_8888);
     }
 
     @Override
@@ -174,13 +179,13 @@ public class MapView extends View implements TileManagerListener {
         float endTileX = Math.min(frameRect.right, sourceRect.right);
         float endTileY = Math.min(frameRect.bottom, sourceRect.bottom);
 
-        Bitmap tileBitmap = null;
+        Bitmap tileBitmap = bitmap;
         while (startTileY < endTileY) {
             while (startTileX < endTileX) {
 
                 tileBitmap = tileManager.getBitmapTile(currentTileX, currentTileY);
-                if (tileBitmap != null)
-                    canvas.drawBitmap(tileBitmap, startTileX, startTileY, paint);
+                /*if (tileBitmap != null && !tileBitmap.isRecycled())
+                    canvas.drawBitmap(tileBitmap, startTileX, startTileY, paint);*/
                 if (DEBUG) {
                     canvas.drawRect(startTileX, startTileY, startTileX + tileSizeX, startTileY + tileSizeY, paint);
                     canvas.drawText(String.format("%d", tileManager.getTileId(currentTileX, currentTileY))

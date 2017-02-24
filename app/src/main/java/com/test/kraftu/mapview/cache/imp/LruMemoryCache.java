@@ -82,6 +82,9 @@ public class LruMemoryCache implements MemoryCache {
                 value = toEvict.getValue();
                 map.remove(key);
                 size -= sizeOf(value);
+                if(value != null){
+                    value.recycle();
+                }
             }
         }
     }
