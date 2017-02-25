@@ -14,8 +14,8 @@ public class OpencyclemapTileRes implements TileResource {
     private static int READ_TIME_OUT = 4 * 1000;
     private static int TILE_SIZE_X = 256;
     private static int TILE_SIZE_Y = 256;
-    private static int COUNT_TILE_X = 100;
-    private static int COUNT_TILE_Y = 100;
+    private static int COUNT_TILE_X = 10;
+    private static int COUNT_TILE_Y = 10;
 
     private static int TILE_OFFSET_X = 33198;
     private static int TILE_OFFSET_Y = 22539;

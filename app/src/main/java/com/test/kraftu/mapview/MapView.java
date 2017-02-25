@@ -2,7 +2,6 @@ package com.test.kraftu.mapview;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -22,22 +21,26 @@ public class MapView extends View implements TileManagerListener {
     public static final String TAG = "MapView";
     public static final boolean DEBUG = false;
 
-    private RectF sourceRect = null;
-    private RectF frameRect = null;
 
-    private Paint paint;
-    private TileManager tileManager;
-    private GestureDetector gestureDetector;
+
+    private Paint mDebugPaint;
+    private TileManager mTileManager;
+    private GestureDetector mGestureDetector;
 
     private int tileSizeX;
     private int tileSizeY;
     private int tileCountX;
     private int tileCountY;
 
-    private int firstTileX;
-    private int firstTileY;
-    private float firstEdgeTileX;
-    private float firstEdgeTileY;
+    private int firstVisibleColumn;
+    private int lastVisibleColumn;
+    private int firstVisibleRow;
+    private int lastVisibleRow;
+
+    private RectF firstRectDrawTile;
+
+    private RectF mSourceRect = null;
+    private RectF mFrameRect = null;
 
     public MapView(Context context) {
         super(context);
@@ -57,153 +60,158 @@ public class MapView extends View implements TileManagerListener {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        frameRect = new RectF(0, 0, getMeasuredWidth(), getMeasuredHeight());
-        log(String.format("vrect:%s srect%s", frameRect, sourceRect));
-        if(tileManager!=null) preDrawLocation();
+
+        mFrameRect = new RectF(0, 0, getMeasuredWidth(), getMeasuredHeight());
+        log(String.format("vrect:%s srect%s", mFrameRect, mSourceRect));
+
+        if(mTileManager !=null) preLoadTile();
     }
 
     public void init() {
 
-        tileManager = new BaseTileManager(getContext());
-        tileManager.setTileManagerListener(this);
-        TileResource tileResource = tileManager.getTileDownloader();
+        mTileManager = new BaseTileManager(getContext());
+        mTileManager.setTileManagerListener(this);
+
+        TileResource tileResource = mTileManager.getTileDownloader();
+
+        if(tileResource == null)
+            throw new IllegalArgumentException("TileResource not be null");
 
         tileSizeX = tileResource.getWidthTile();
         tileSizeY = tileResource.getHeightTile();
         tileCountX = tileResource.getCountTileX();
         tileCountY = tileResource.getCountTileY();
 
-        sourceRect = new RectF(0, 0, tileSizeX * tileCountX, tileSizeY * tileCountY);
+        if(tileSizeX <=0 || tileSizeY <=0 || tileCountX <=0 || tileCountY <= 0)
+            throw new IllegalArgumentException("TileResource invalid tile settings");
 
-        paint = new Paint();
-        paint.setColor(Color.BLACK);
-        paint.setStrokeWidth(2);
-        paint.setTextSize(20);
-        paint.setStyle(Paint.Style.STROKE);
+        mSourceRect = new RectF(0, 0, tileSizeX * tileCountX, tileSizeY * tileCountY);
 
-        gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+        mDebugPaint = new Paint();
+        mDebugPaint.setColor(Color.BLACK);
+        mDebugPaint.setStrokeWidth(2);
+        mDebugPaint.setTextSize(20);
+        mDebugPaint.setStyle(Paint.Style.STROKE);
+
+        mGestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                setTranslate(-distanceX, -distanceY);
+                setTranslateMap(-distanceX, -distanceY);
                 return true;
             }
         });
-        /*postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                setTranslate(-5,-5);
-                postDelayed(this,20);
-            }
-        },1000);*/
+
+        firstRectDrawTile = new RectF();
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if(event.getAction() == MotionEvent.ACTION_DOWN){
-            tileManager.cancelLoad();
+            mTileManager.cancelLoad();
         }
-        gestureDetector.onTouchEvent(event);
+        mGestureDetector.onTouchEvent(event);
         return true;
     }
 
-    public void setTranslate(float dx, float dy) { /*log(String.format("----")); log(String.format("dx:%f dy:%f",dx,dy));*/
-        if (!frameRect.contains(sourceRect)) {
-            sourceRect.left = sourceRect.left + dx;
-            sourceRect.right = sourceRect.right + dx;
-            sourceRect.top = sourceRect.top + dy;
-            sourceRect.bottom = sourceRect.bottom + dy;
+    public void setTranslateMap(float dx, float dy) {
+        if (!mFrameRect.contains(mSourceRect)) {
+            mSourceRect.left = mSourceRect.left + dx;
+            mSourceRect.right = mSourceRect.right + dx;
+            mSourceRect.top = mSourceRect.top + dy;
+            mSourceRect.bottom = mSourceRect.bottom + dy;
             checkMoveBounds();
         }
-        preDrawLocation();
+        preLoadTile();
         invalidate();
     }
 
     private void checkMoveBounds() {
-        float diff = sourceRect.left - frameRect.left;
+        float diff = mSourceRect.left - mFrameRect.left;
         if (diff > 0) {
-            sourceRect.left = sourceRect.left - diff;
-            sourceRect.right = sourceRect.right - diff;
+            mSourceRect.left = mSourceRect.left - diff;
+            mSourceRect.right = mSourceRect.right - diff;
 
         }
-        diff = sourceRect.right - frameRect.right;
+        diff = mSourceRect.right - mFrameRect.right;
         if (diff < 0) {
-            sourceRect.left = sourceRect.left - diff;
-            sourceRect.right = sourceRect.right - diff;
+            mSourceRect.left = mSourceRect.left - diff;
+            mSourceRect.right = mSourceRect.right - diff;
         }
 
-        diff = sourceRect.top - frameRect.top;
+        diff = mSourceRect.top - mFrameRect.top;
         if (diff > 0) {
-            sourceRect.top = sourceRect.top - diff;
-            sourceRect.bottom = sourceRect.bottom - diff;
+            mSourceRect.top = mSourceRect.top - diff;
+            mSourceRect.bottom = mSourceRect.bottom - diff;
         }
-        diff = sourceRect.bottom - frameRect.bottom;
+        diff = mSourceRect.bottom - mFrameRect.bottom;
         if (diff < 0) {
-            sourceRect.top = sourceRect.top - diff;
-            sourceRect.bottom = sourceRect.bottom - diff;
+            mSourceRect.top = mSourceRect.top - diff;
+            mSourceRect.bottom = mSourceRect.bottom - diff;
         }
     }
 
-    public int getTileRawX(float screenX) {
-        return (int) (screenX - sourceRect.left) / tileSizeX;
+    public int getColumnTile(float screenX) {
+        return (int) (screenX - mSourceRect.left) / tileSizeX;
     }
 
-    public int getTileRawY(float screenY) {
-        return (int) (screenY - sourceRect.top) / tileSizeY;
+    public int getRowTile(float screenY) {
+        return (int) (screenY - mSourceRect.top) / tileSizeY;
     }
 
-    public float getLocationTileX(int tileX) {
-        return tileX * tileSizeX + sourceRect.left;
+    public RectF getFrameBoundsTile(RectF source, int raw, int column){
+        source.set(0, 0, tileSizeX, tileSizeY);
+        source.offsetTo(raw * tileSizeX + mSourceRect.left,
+                column * tileSizeY + mSourceRect.top);
+        return source;
     }
 
-    public float getLocationTileY(int tileY) {
-        return tileY * tileSizeY + sourceRect.top;
-    }
+    private void preLoadTile(){
+        firstVisibleColumn = getColumnTile(mFrameRect.left);
+        firstVisibleRow = getRowTile(mFrameRect.left);
+        lastVisibleColumn = getColumnTile(mFrameRect.right);
+        lastVisibleRow =  getRowTile(mFrameRect.bottom);
 
-    private void preDrawLocation(){
-        firstTileX = getTileRawX(0);
-        firstTileY = getTileRawY(0);
-        firstEdgeTileX = getLocationTileX(firstTileX);
-        firstEdgeTileY =  getLocationTileY(firstTileY);
+        firstRectDrawTile = getFrameBoundsTile(firstRectDrawTile, firstVisibleColumn, firstVisibleRow);
 
-        tileManager.updateVisibleTile(firstTileX - 1, getTileRawX(frameRect.right) + 1, firstTileY - 1,getTileRawY(frameRect.bottom) + 1);
+        mTileManager.updateVisibleTile(firstVisibleColumn - 1, lastVisibleColumn + 1, firstVisibleRow - 1, lastVisibleRow + 1);
     }
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if(tileManager == null || sourceRect == null || frameRect == null) return;
+
+        if(mTileManager == null || mSourceRect == null || mFrameRect == null) return;
 
         Bitmap tileBitmap = null;
 
-        int currentTileX = firstTileX;
-        int currentTileY = firstTileY;
+        int columnTile = firstVisibleColumn;
+        int rowTileY = firstVisibleRow;
 
-        float startTileX = firstEdgeTileX;
-        float startTileY = firstEdgeTileY;
-        float endTileX = Math.min(frameRect.right, sourceRect.right);
-        float endTileY = Math.min(frameRect.bottom, sourceRect.bottom);
+        float startTileX = firstRectDrawTile.left;
+        float startTileY = firstRectDrawTile.top;
+        float endTileX = Math.min(mFrameRect.right, mSourceRect.right);
+        float endTileY = Math.min(mFrameRect.bottom, mSourceRect.bottom);
 
 
         while (startTileY < endTileY) {
             while (startTileX < endTileX) {
 
-                tileBitmap = tileManager.getBitmapTile(currentTileX, currentTileY);
+                tileBitmap = mTileManager.getBitmapTile(columnTile, rowTileY);
                 if (tileBitmap != null && !tileBitmap.isRecycled())
-                    canvas.drawBitmap(tileBitmap, startTileX, startTileY, paint);
+                    canvas.drawBitmap(tileBitmap, startTileX, startTileY, mDebugPaint);
 
                 if (DEBUG) {
-                    canvas.drawRect(startTileX, startTileY, startTileX + tileSizeX, startTileY + tileSizeY, paint);
-                    canvas.drawText(String.format("%d", tileManager.getTileId(currentTileX, currentTileY))
-                            ,startTileX, startTileY+20, paint);
+                    canvas.drawRect(startTileX, startTileY, startTileX + tileSizeX, startTileY + tileSizeY, mDebugPaint);
+                    canvas.drawText(String.format("%d", mTileManager.getTileId(columnTile, rowTileY))
+                            ,startTileX, startTileY+20, mDebugPaint);
                 }
-
-                currentTileX = currentTileX + 1;
+                columnTile = columnTile + 1;
                 startTileX = startTileX + tileSizeX;
             }
 
-            currentTileX = firstTileX;
-            currentTileY = currentTileY + 1;
+            columnTile = this.firstVisibleColumn;
+            rowTileY = rowTileY + 1;
 
-            startTileX = firstEdgeTileX;
+            startTileX = firstRectDrawTile.left;
             startTileY = startTileY + tileSizeY;
         }
 
