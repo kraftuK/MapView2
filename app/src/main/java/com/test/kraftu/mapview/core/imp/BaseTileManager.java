@@ -28,7 +28,8 @@ import java.util.concurrent.Executors;
 
 public class BaseTileManager implements TileManager {
     public static final int THREAD_POOL_SIZE = 2;
-    public static final int SIZE_MEMORY_CACHE = 15 * 1024 * 1024;
+    public static final int SIZE_MEMORY_CACHE = 20 * 1024 * 1024;
+    public static final int COUNT_BUFF_TILE = 1;
     public static final boolean DEBUG = false;
     public static final String TAG = "BaseTileManager";
 
@@ -48,15 +49,15 @@ public class BaseTileManager implements TileManager {
     public BaseTileManager(Context context) {
         mTileRes = new OpencyclemapTileRes();
         mMemoryCache = new LastUsageMemoryCache(SIZE_MEMORY_CACHE);
-        //mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
+        mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
         mExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
                 new MapThreadFactory(TAG + "_Thread"));
     }
 
     @Override
-    public void updateVisibleTile(int tileX, int tileY, int sizeX, int sizeY) {
-        for(int i = tileX; i < tileX + sizeX; i++){
-            for(int j = tileY; j < tileY + sizeY; j++){
+    public void updateVisibleTile(int startX, int endX, int startY, int endY) {
+        for(int i = startX; i <= endX; i++){
+            for(int j = startY; j <= endY; j++){
                 Integer tileId = getTileId(i,j);
                 if(!mListTask.containsKey(tileId) &&
                         mMemoryCache.get(tileId) == null) startLoadTask(i,j);
