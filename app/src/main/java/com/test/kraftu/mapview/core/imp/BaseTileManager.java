@@ -54,12 +54,23 @@ public class BaseTileManager implements TileManager {
     }
 
     @Override
+    public void updateVisibleTile(int tileX, int tileY, int sizeX, int sizeY) {
+        for(int i = tileX; i < tileX + sizeX; i++){
+            for(int j = tileY; j < tileY + sizeY; j++){
+                Integer tileId = getTileId(i,j);
+                if(!mListTask.containsKey(tileId) &&
+                        mMemoryCache.get(tileId) == null) startLoadTask(i,j);
+            }
+        }
+    }
+
+    @Override
     public Bitmap getBitmapTile(int tileX, int tileY) {
         Integer tileId = getTileId(tileX,tileY);
         Bitmap bitmap = mMemoryCache.get(tileId);
 
         if(bitmap == null && !mListTask.containsKey(tileId)){
-            startLoadTask(tileX,tileY);
+           // startLoadTask(tileX,tileY);
         }
 
         return bitmap;

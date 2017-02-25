@@ -20,7 +20,7 @@ import com.test.kraftu.mapview.network.TileResource;
 
 public class MapView extends View implements TileManagerListener {
     public static final String TAG = "MapView";
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
 
     private RectF sourceRect = null;
     private RectF frameRect = null;
@@ -165,6 +165,9 @@ public class MapView extends View implements TileManagerListener {
         firstTileY = getTileRawY(0);
         firstEdgeTileX = getLocationTileX(firstTileX);
         firstEdgeTileY =  getLocationTileY(firstTileY);
+
+        tileManager.updateVisibleTile(firstTileX,firstTileY,
+                getTileRawX(frameRect.right) - firstTileX,getTileRawY(frameRect.bottom) - firstTileY);
     }
     @Override
     protected void onDraw(Canvas canvas) {
@@ -184,7 +187,6 @@ public class MapView extends View implements TileManagerListener {
 
         while (startTileY < endTileY) {
             while (startTileX < endTileX) {
-
                 tileBitmap = tileManager.getBitmapTile(currentTileX, currentTileY);
                 if (tileBitmap != null && !tileBitmap.isRecycled())
                     canvas.drawBitmap(tileBitmap, startTileX, startTileY, paint);
