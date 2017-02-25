@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 
 public class BaseTileManager implements TileManager {
     public static final int THREAD_POOL_SIZE = 2;
-    public static final int SIZE_MEMORY_CACHE = 20 * 1024 * 1024;
+    public static final int SIZE_MEMORY_CACHE = 15 * 1024 * 1024;
     public static final boolean DEBUG = false;
     public static final String TAG = "BaseTileManager";
 
@@ -48,7 +48,7 @@ public class BaseTileManager implements TileManager {
     public BaseTileManager(Context context) {
         mTileRes = new OpencyclemapTileRes();
         mMemoryCache = new LastUsageMemoryCache(SIZE_MEMORY_CACHE);
-        mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
+        //mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
         mExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
                 new MapThreadFactory(TAG + "_Thread"));
     }
@@ -59,13 +59,18 @@ public class BaseTileManager implements TileManager {
         Bitmap bitmap = mMemoryCache.get(tileId);
 
         if(bitmap == null && !mListTask.containsKey(tileId)){
-            LoadBitmap loadBitmap = new LoadBitmap(tileId,tileX,tileY);
-            mListTask.put(tileId,loadBitmap);
-            mExecutor.execute(loadBitmap);
-            if(DEBUG) Log.d(TAG,String.format("Create %s",loadBitmap.toString()));
+            startLoadTask(tileX,tileY);
         }
 
         return bitmap;
+    }
+
+    private void startLoadTask(int tileX, int tileY){
+        Integer tileId = getTileId(tileX,tileY);
+        LoadBitmap loadBitmap = new LoadBitmap(tileId,tileX,tileY);
+        mListTask.put(tileId,loadBitmap);
+        mExecutor.execute(loadBitmap);
+        if(DEBUG) Log.d(TAG,String.format("Create %s",loadBitmap.toString()));
     }
 
     @Override
