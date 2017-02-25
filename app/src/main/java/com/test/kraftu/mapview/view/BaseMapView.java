@@ -14,7 +14,6 @@ import android.view.View;
 
 import com.test.kraftu.mapview.core.TileManager;
 import com.test.kraftu.mapview.core.TileManagerListener;
-import com.test.kraftu.mapview.core.imp.BaseTileManager;
 import com.test.kraftu.mapview.core.TileResource;
 
 public abstract class BaseMapView extends View implements TileManagerListener {
@@ -231,7 +230,7 @@ public abstract class BaseMapView extends View implements TileManagerListener {
     }
 
     @Override
-    public void erorrTile(int idTile, Exception exc) {
+    public void errorTile(int idTile, Exception exc) {
         if(DEBUG) log(String.format("tileId:%d Exception:%s", idTile, exc.getMessage()));
     }
 }
