@@ -34,6 +34,6 @@ public class OpencycleMapView extends BaseMapView {
         MemoryCache memoryCache = new LastUsageMemoryCache(LastUsageMemoryCache.DEFAULT_SIZE);
         DiskCache diskCache = new UnlimitedDiskCache(getContext().getCacheDir());
 
-        return new BaseTileManager(getContext(),tileRes,memoryCache,diskCache);
+        return new BaseTileManager(tileRes, memoryCache, diskCache);
     }
 }

@@ -19,6 +19,7 @@ import com.test.kraftu.mapview.core.TileResource;
 public abstract class BaseMapView extends View implements TileManagerListener {
     public static final String TAG = "MapView";
     public static final boolean DEBUG = false;
+    private static final int EXTRA_COUNT_TILE = 1;
 
     private Paint mDebugPaint;
     private TileManager mTileManager;
@@ -62,7 +63,7 @@ public abstract class BaseMapView extends View implements TileManagerListener {
         mFrameRect = new RectF(0, 0, getMeasuredWidth(), getMeasuredHeight());
         log(String.format("vrect:%s srect%s", mFrameRect, mSourceRect));
 
-        if(mTileManager !=null) preLoadTile();
+        if(mTileManager !=null) preLoadVisibleTile();
     }
 
     public void init() {
@@ -97,6 +98,12 @@ public abstract class BaseMapView extends View implements TileManagerListener {
                 setTranslateMap(-distanceX, -distanceY);
                 return true;
             }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                preLoadVisibleTile();
+                return super.onSingleTapUp(e);
+            }
         });
 
         firstRectDrawTile = new RectF();
@@ -119,7 +126,7 @@ public abstract class BaseMapView extends View implements TileManagerListener {
             mSourceRect.bottom += dy;
             checkMoveBounds();
         }
-        preLoadTile();
+        preLoadVisibleTile();
         invalidate();
     }
 
@@ -163,7 +170,7 @@ public abstract class BaseMapView extends View implements TileManagerListener {
         return source;
     }
 
-    private void preLoadTile(){
+    protected void preLoadVisibleTile(){
         firstVisibleColumn = getColumnTile(mFrameRect.left);
         firstVisibleRow = getRowTile(mFrameRect.left);
         lastVisibleColumn = getColumnTile(mFrameRect.right);
@@ -171,7 +178,10 @@ public abstract class BaseMapView extends View implements TileManagerListener {
 
         firstRectDrawTile = getFrameBoundsTile(firstRectDrawTile, firstVisibleColumn, firstVisibleRow);
 
-        mTileManager.updateVisibleTile(firstVisibleColumn, lastVisibleColumn, firstVisibleRow, lastVisibleRow);
+        mTileManager.updateVisibleTile(firstVisibleColumn - EXTRA_COUNT_TILE,
+                lastVisibleColumn + EXTRA_COUNT_TILE,
+                firstVisibleRow - EXTRA_COUNT_TILE,
+                lastVisibleRow + EXTRA_COUNT_TILE);
     }
     @Override
     protected void onDraw(Canvas canvas) {

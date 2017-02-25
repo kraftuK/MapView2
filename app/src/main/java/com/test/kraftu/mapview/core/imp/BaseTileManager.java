@@ -43,7 +43,7 @@ public class BaseTileManager implements TileManager {
     private ExecutorService mExecutor;
     private HashMap<Integer,LoadBitmap> mListTask = new HashMap<>();
 
-    public BaseTileManager(Context context, TileResource tileRes,
+    public BaseTileManager(TileResource tileRes,
                            MemoryCache memoryCache, DiskCache diskCache) {
         mExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
                 new MapThreadFactory(TAG + "_Thread"));

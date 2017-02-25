@@ -11,11 +11,11 @@ import java.net.URL;
 
 public class OpenMapTileResource implements TileResource {
 
-    private static int READ_TIME_OUT = 4 * 1000;
+    private static int SOCKET_READ_TIMEOUT = 4 * 1000;
     private static int TILE_SIZE_X = 256;
     private static int TILE_SIZE_Y = 256;
-    private static int COUNT_TILE_X = 10;
-    private static int COUNT_TILE_Y = 10;
+    private static int COUNT_TILE_X = 100;
+    private static int COUNT_TILE_Y = 100;
 
     private static int TILE_OFFSET_X = 33198;
     private static int TILE_OFFSET_Y = 22539;
@@ -25,7 +25,7 @@ public class OpenMapTileResource implements TileResource {
         try {
             URL url = new URL(link);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setReadTimeout(READ_TIME_OUT);
+            connection.setReadTimeout(SOCKET_READ_TIMEOUT);
             connection.setDoInput(true);
             connection.connect();
             InputStream input = connection.getInputStream();
