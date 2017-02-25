@@ -1,4 +1,4 @@
-package com.test.kraftu.mapview.utils;
+package com.test.kraftu.mapview.core.utils;
 
 
 import java.util.concurrent.ThreadFactory;

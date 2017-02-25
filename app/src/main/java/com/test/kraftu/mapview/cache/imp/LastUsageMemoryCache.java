@@ -11,15 +11,17 @@ import java.util.TreeMap;
 
 
 public class LastUsageMemoryCache implements MemoryCache {
-    private final LinkedHashMap<Integer,OverBitmap> map;
-    private final TreeMap<Long,Integer> mapLastUsage;
+    private final LinkedHashMap<Integer, OverBitmap> mapBitmap;
+    private final TreeMap<Long, Integer> mapLastUsage;
+
     private final int maxSize;
     private int size;
 
     public LastUsageMemoryCache(int maxSize) {
-        if(maxSize < 0)  throw new IllegalArgumentException("maxSize <= 0");
+        if (maxSize < 0) throw new IllegalArgumentException("maxSize <= 0");
         this.maxSize = maxSize;
-        map = new LinkedHashMap<>();
+
+        mapBitmap = new LinkedHashMap<>();
         mapLastUsage = new TreeMap<>(new Comparator<Long>() {
             @Override
             public int compare(Long o1, Long o2) {
@@ -36,9 +38,9 @@ public class LastUsageMemoryCache implements MemoryCache {
 
         synchronized (this) {
             size += sizeOf(value);
-            OverBitmap overBitmap = new OverBitmap(value,System.nanoTime());
-            mapLastUsage.put(overBitmap.lastTimeUsage,key);
-            overBitmap = map.put(key, overBitmap);
+            OverBitmap overBitmap = new OverBitmap(value, System.nanoTime());
+            mapLastUsage.put(overBitmap.lastTimeUsage, key);
+            overBitmap = mapBitmap.put(key, overBitmap);
             if (overBitmap != null) {
                 mapLastUsage.remove(overBitmap.lastTimeUsage);
                 size -= sizeOf(overBitmap.bitmap);
@@ -56,30 +58,29 @@ public class LastUsageMemoryCache implements MemoryCache {
         }
 
         synchronized (this) {
-            OverBitmap overBitmap = map.get(key);
-            if(overBitmap != null){
+            OverBitmap overBitmap = mapBitmap.get(key);
+            if (overBitmap != null) {
                 mapLastUsage.remove(overBitmap.lastTimeUsage);
                 overBitmap.lastTimeUsage = System.nanoTime();
-                mapLastUsage.put(overBitmap.lastTimeUsage,key);
+                mapLastUsage.put(overBitmap.lastTimeUsage, key);
             }
             return overBitmap != null ? overBitmap.bitmap : null;
         }
     }
 
     @Override
-    public Bitmap remove(Integer key) {
+    public void remove(Integer key) {
         if (key == null) {
             throw new NullPointerException("key == null");
         }
         synchronized (this) {
-            OverBitmap previous = map.remove(key);
+            OverBitmap previous = mapBitmap.remove(key);
             if (previous != null) {
                 size -= sizeOf(previous.bitmap);
                 previous.bitmap.recycle();
                 previous.bitmap = null;
                 mapLastUsage.remove(previous.lastTimeUsage);
             }
-            return null;
         }
     }
 
@@ -88,11 +89,11 @@ public class LastUsageMemoryCache implements MemoryCache {
             Integer key;
             OverBitmap value;
             synchronized (this) {
-                if (size < 0 || (map.isEmpty() && size != 0)) {
+                if (size < 0 || (mapBitmap.isEmpty() && size != 0)) {
                     throw new IllegalStateException(getClass().getName() + ".sizeOf() is reporting inconsistent results!");
                 }
 
-                if (size <= maxSize || map.isEmpty()) {
+                if (size <= maxSize || mapBitmap.isEmpty()) {
                     break;
                 }
 
@@ -102,13 +103,13 @@ public class LastUsageMemoryCache implements MemoryCache {
                     break;
                 }
                 key = toEvict.getValue();
-                value = map.get(key);
-                map.remove(key);
+                value = mapBitmap.get(key);
+                mapBitmap.remove(key);
 
                 size -= sizeOf(value.bitmap);
                 mapLastUsage.remove(toEvict.getKey());
 
-                if(value.bitmap != null){
+                if (value.bitmap != null) {
                     value.bitmap.recycle();
                     value.bitmap = null;
                 }
@@ -133,7 +134,7 @@ public class LastUsageMemoryCache implements MemoryCache {
                 '}';
     }
 
-    public class OverBitmap{
+    public class OverBitmap {
         public Bitmap bitmap;
         public long lastTimeUsage;
 

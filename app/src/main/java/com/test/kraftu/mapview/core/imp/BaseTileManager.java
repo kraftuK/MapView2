@@ -10,20 +10,17 @@ import android.util.Log;
 import com.test.kraftu.mapview.cache.DiskCache;
 import com.test.kraftu.mapview.cache.MemoryCache;
 import com.test.kraftu.mapview.cache.imp.LastUsageMemoryCache;
-import com.test.kraftu.mapview.cache.imp.LruMemoryCache;
 import com.test.kraftu.mapview.cache.imp.UnlimitedDiskCache;
 import com.test.kraftu.mapview.core.TileManager;
 import com.test.kraftu.mapview.core.TileManagerListener;
-import com.test.kraftu.mapview.network.imp.OpencyclemapTileRes;
-import com.test.kraftu.mapview.network.TileResource;
-import com.test.kraftu.mapview.utils.MapThreadFactory;
+import com.test.kraftu.mapview.core.TileResource;
+import com.test.kraftu.mapview.core.utils.MapThreadFactory;
 
 import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,7 +28,6 @@ import java.util.concurrent.Executors;
 public class BaseTileManager implements TileManager {
     public static final int THREAD_POOL_SIZE = 2;
     public static final int SIZE_MEMORY_CACHE = 20 * 1024 * 1024;
-    public static final int COUNT_BUFF_TILE = 1;
     public static final boolean DEBUG = false;
     public static final String TAG = "BaseTileManager";
 
@@ -49,11 +45,13 @@ public class BaseTileManager implements TileManager {
     private HashMap<Integer,LoadBitmap> mListTask = new HashMap<>();
 
     public BaseTileManager(Context context) {
-        mTileRes = new OpencyclemapTileRes();
-        mMemoryCache = new LastUsageMemoryCache(SIZE_MEMORY_CACHE);
-        mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
         mExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
                 new MapThreadFactory(TAG + "_Thread"));
+
+        mTileRes = new OpenMapTileResource();
+        mMemoryCache = new LastUsageMemoryCache(SIZE_MEMORY_CACHE);
+        mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
+;
     }
 
     @Override
@@ -79,17 +77,9 @@ public class BaseTileManager implements TileManager {
         return bitmap;
     }
 
-    private void startLoadTask(int tileX, int tileY){
-        Integer tileId = getTileId(tileX,tileY);
-        LoadBitmap loadBitmap = new LoadBitmap(tileId,tileX,tileY);
-        mListTask.put(tileId,loadBitmap);
-        mExecutor.submit(loadBitmap);
-        if(DEBUG) Log.d(TAG,String.format("Create %s",loadBitmap.toString()));
-    }
-
     @Override
     public int getTileId(int tileX, int tileY) {
-        return tileY * mTileRes.getCountTileX() + tileX;
+        return tileY * mTileRes.getCountColumnTile() + tileX;
     }
 
     @Override
@@ -122,6 +112,15 @@ public class BaseTileManager implements TileManager {
             }
         });
     }
+
+    private void startLoadTask(int tileX, int tileY){
+        Integer tileId = getTileId(tileX,tileY);
+        LoadBitmap loadBitmap = new LoadBitmap(tileId,tileX,tileY);
+        mListTask.put(tileId,loadBitmap);
+        mExecutor.submit(loadBitmap);
+        if(DEBUG) Log.d(TAG,String.format("Create %s",loadBitmap.toString()));
+    }
+
 
     private void notifyLoadedNewTile(int idTile){
         TileManagerListener listener = mTileListenerRef.get();

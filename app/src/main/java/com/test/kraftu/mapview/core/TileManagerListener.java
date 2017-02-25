@@ -1,9 +1,8 @@
 package com.test.kraftu.mapview.core;
 
-/**
- * Created by Слава on 23.02.2017.
- */
 
-public interface TileManagerListener{
+public interface TileManagerListener {
     void loadedTile(int idTile);
+
+    void erorrTile(int idTile, Exception exc);
 }

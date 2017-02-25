@@ -1,4 +1,4 @@
-package com.test.kraftu.mapview;
+package com.test.kraftu.mapview.view;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -15,13 +15,11 @@ import android.view.View;
 import com.test.kraftu.mapview.core.TileManager;
 import com.test.kraftu.mapview.core.TileManagerListener;
 import com.test.kraftu.mapview.core.imp.BaseTileManager;
-import com.test.kraftu.mapview.network.TileResource;
+import com.test.kraftu.mapview.core.TileResource;
 
 public class MapView extends View implements TileManagerListener {
     public static final String TAG = "MapView";
     public static final boolean DEBUG = false;
-
-
 
     private Paint mDebugPaint;
     private TileManager mTileManager;
@@ -79,8 +77,8 @@ public class MapView extends View implements TileManagerListener {
 
         tileSizeX = tileResource.getWidthTile();
         tileSizeY = tileResource.getHeightTile();
-        tileCountX = tileResource.getCountTileX();
-        tileCountY = tileResource.getCountTileY();
+        tileCountX = tileResource.getCountColumnTile();
+        tileCountY = tileResource.getCountRowTile();
 
         if(tileSizeX <=0 || tileSizeY <=0 || tileCountX <=0 || tileCountY <= 0)
             throw new IllegalArgumentException("TileResource invalid tile settings");
@@ -115,10 +113,10 @@ public class MapView extends View implements TileManagerListener {
 
     public void setTranslateMap(float dx, float dy) {
         if (!mFrameRect.contains(mSourceRect)) {
-            mSourceRect.left = mSourceRect.left + dx;
-            mSourceRect.right = mSourceRect.right + dx;
-            mSourceRect.top = mSourceRect.top + dy;
-            mSourceRect.bottom = mSourceRect.bottom + dy;
+            mSourceRect.left += dx;
+            mSourceRect.right += dx;
+            mSourceRect.top += dy;
+            mSourceRect.bottom += dy;
             checkMoveBounds();
         }
         preLoadTile();
@@ -128,25 +126,25 @@ public class MapView extends View implements TileManagerListener {
     private void checkMoveBounds() {
         float diff = mSourceRect.left - mFrameRect.left;
         if (diff > 0) {
-            mSourceRect.left = mSourceRect.left - diff;
-            mSourceRect.right = mSourceRect.right - diff;
+            mSourceRect.left -= diff;
+            mSourceRect.right -= diff;
 
         }
         diff = mSourceRect.right - mFrameRect.right;
         if (diff < 0) {
-            mSourceRect.left = mSourceRect.left - diff;
-            mSourceRect.right = mSourceRect.right - diff;
+            mSourceRect.left -= diff;
+            mSourceRect.right -= diff;
         }
 
         diff = mSourceRect.top - mFrameRect.top;
         if (diff > 0) {
-            mSourceRect.top = mSourceRect.top - diff;
-            mSourceRect.bottom = mSourceRect.bottom - diff;
+            mSourceRect.top -= diff;
+            mSourceRect.bottom -= diff;
         }
         diff = mSourceRect.bottom - mFrameRect.bottom;
         if (diff < 0) {
-            mSourceRect.top = mSourceRect.top - diff;
-            mSourceRect.bottom = mSourceRect.bottom - diff;
+            mSourceRect.top -= diff;
+            mSourceRect.bottom -= diff;
         }
     }
 
@@ -173,7 +171,7 @@ public class MapView extends View implements TileManagerListener {
 
         firstRectDrawTile = getFrameBoundsTile(firstRectDrawTile, firstVisibleColumn, firstVisibleRow);
 
-        mTileManager.updateVisibleTile(firstVisibleColumn - 1, lastVisibleColumn + 1, firstVisibleRow - 1, lastVisibleRow + 1);
+        mTileManager.updateVisibleTile(firstVisibleColumn, lastVisibleColumn, firstVisibleRow, lastVisibleRow);
     }
     @Override
     protected void onDraw(Canvas canvas) {
@@ -186,33 +184,38 @@ public class MapView extends View implements TileManagerListener {
         int columnTile = firstVisibleColumn;
         int rowTileY = firstVisibleRow;
 
-        float startTileX = firstRectDrawTile.left;
-        float startTileY = firstRectDrawTile.top;
-        float endTileX = Math.min(mFrameRect.right, mSourceRect.right);
-        float endTileY = Math.min(mFrameRect.bottom, mSourceRect.bottom);
+        float startDrawX = firstRectDrawTile.left;
+        float startDrawY = firstRectDrawTile.top;
+
+        float endDrawX = Math.min(mFrameRect.right, mSourceRect.right);
+        float endDrawY = Math.min(mFrameRect.bottom, mSourceRect.bottom);
 
 
-        while (startTileY < endTileY) {
-            while (startTileX < endTileX) {
+        while (startDrawY < endDrawY) {
+            while (startDrawX < endDrawX) {
 
                 tileBitmap = mTileManager.getBitmapTile(columnTile, rowTileY);
                 if (tileBitmap != null && !tileBitmap.isRecycled())
-                    canvas.drawBitmap(tileBitmap, startTileX, startTileY, mDebugPaint);
+                    canvas.drawBitmap(tileBitmap, startDrawX, startDrawY, mDebugPaint);
+
 
                 if (DEBUG) {
-                    canvas.drawRect(startTileX, startTileY, startTileX + tileSizeX, startTileY + tileSizeY, mDebugPaint);
-                    canvas.drawText(String.format("%d", mTileManager.getTileId(columnTile, rowTileY))
-                            ,startTileX, startTileY+20, mDebugPaint);
+                    Integer tileId = mTileManager.getTileId(columnTile, rowTileY);
+                    canvas.drawRect(startDrawX, startDrawY,
+                            startDrawX + tileSizeX, startDrawY + tileSizeY, mDebugPaint);
+                    canvas.drawText(String.format("%d", tileId),
+                            startDrawX, startDrawY + 20, mDebugPaint);
                 }
-                columnTile = columnTile + 1;
-                startTileX = startTileX + tileSizeX;
+
+                columnTile += 1;
+                startDrawX = startDrawX + tileSizeX;
             }
 
             columnTile = this.firstVisibleColumn;
-            rowTileY = rowTileY + 1;
+            rowTileY += 1;
 
-            startTileX = firstRectDrawTile.left;
-            startTileY = startTileY + tileSizeY;
+            startDrawX = firstRectDrawTile.left;
+            startDrawY = startDrawY + tileSizeY;
         }
 
     }
@@ -224,5 +227,10 @@ public class MapView extends View implements TileManagerListener {
     @Override
     public void loadedTile(int tileId) {
         postInvalidate();
+    }
+
+    @Override
+    public void erorrTile(int idTile, Exception exc) {
+        if(DEBUG) log(String.format("tileId:%d Exception:%s", idTile, exc.getMessage()));
     }
 }

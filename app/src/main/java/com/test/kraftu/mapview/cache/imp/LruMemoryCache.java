@@ -9,12 +9,12 @@ import java.util.Map;
 
 
 public class LruMemoryCache implements MemoryCache {
-    private final LinkedHashMap<Integer,Bitmap> map;
+    private final LinkedHashMap<Integer, Bitmap> map;
     private final int maxSize;
     private int size;
 
     public LruMemoryCache(int maxSize) {
-        if(maxSize < 0)  throw new IllegalArgumentException("maxSize <= 0");
+        if (maxSize < 0) throw new IllegalArgumentException("maxSize <= 0");
         this.maxSize = maxSize;
         map = new LinkedHashMap<>();
     }
@@ -48,7 +48,7 @@ public class LruMemoryCache implements MemoryCache {
     }
 
     @Override
-    public Bitmap remove(Integer key) {
+    public void remove(Integer key) {
         if (key == null) {
             throw new NullPointerException("key == null");
         }
@@ -57,7 +57,6 @@ public class LruMemoryCache implements MemoryCache {
             if (previous != null) {
                 size -= sizeOf(previous);
             }
-            return previous;
         }
     }
 
@@ -67,7 +66,8 @@ public class LruMemoryCache implements MemoryCache {
             Bitmap value;
             synchronized (this) {
                 if (size < 0 || (map.isEmpty() && size != 0)) {
-                    throw new IllegalStateException(getClass().getName() + ".sizeOf() is reporting inconsistent results!");
+                    throw new IllegalStateException(getClass().getName() +
+                            ".sizeOf() is reporting inconsistent results!");
                 }
 
                 if (size <= maxSize || map.isEmpty()) {
@@ -82,7 +82,7 @@ public class LruMemoryCache implements MemoryCache {
                 value = toEvict.getValue();
                 map.remove(key);
                 size -= sizeOf(value);
-                if(value != null){
+                if (value != null) {
                     value.recycle();
                 }
             }

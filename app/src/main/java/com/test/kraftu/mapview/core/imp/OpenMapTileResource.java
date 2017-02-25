@@ -1,16 +1,16 @@
-package com.test.kraftu.mapview.network.imp;
+package com.test.kraftu.mapview.core.imp;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.test.kraftu.mapview.network.TileResource;
+import com.test.kraftu.mapview.core.TileResource;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class OpencyclemapTileRes implements TileResource {
+public class OpenMapTileResource implements TileResource {
+
     private static int READ_TIME_OUT = 4 * 1000;
     private static int TILE_SIZE_X = 256;
     private static int TILE_SIZE_Y = 256;
@@ -44,12 +44,12 @@ public class OpencyclemapTileRes implements TileResource {
 
 
     @Override
-    public int getCountTileX() {
+    public int getCountColumnTile() {
         return COUNT_TILE_X;
     }
 
     @Override
-    public int getCountTileY() {
+    public int getCountRowTile() {
         return COUNT_TILE_Y;
     }
 
