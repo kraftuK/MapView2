@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 public class LastUsageMemoryCache implements MemoryCache {
     private final LinkedHashMap<Integer,OverBitmap> map;
-    private final TreeMap<Long,Integer> mapLastUsege;
+    private final TreeMap<Long,Integer> mapLastUsage;
     private final int maxSize;
     private int size;
 
@@ -20,7 +20,7 @@ public class LastUsageMemoryCache implements MemoryCache {
         if(maxSize < 0)  throw new IllegalArgumentException("maxSize <= 0");
         this.maxSize = maxSize;
         map = new LinkedHashMap<>();
-        mapLastUsege = new TreeMap<>(new Comparator<Long>() {
+        mapLastUsage = new TreeMap<>(new Comparator<Long>() {
             @Override
             public int compare(Long o1, Long o2) {
                 return o1.compareTo(o2);
@@ -37,7 +37,7 @@ public class LastUsageMemoryCache implements MemoryCache {
         synchronized (this) {
             size += sizeOf(value);
             OverBitmap overBitmap = new OverBitmap(value,System.nanoTime());
-            mapLastUsege.put(overBitmap.lastTimeUsage,key);
+            mapLastUsage.put(overBitmap.lastTimeUsage,key);
             overBitmap = map.put(key, overBitmap);
             if (overBitmap != null) {
                 size -= sizeOf(overBitmap.bitmap);
@@ -55,12 +55,12 @@ public class LastUsageMemoryCache implements MemoryCache {
 
         synchronized (this) {
             OverBitmap overBitmap = map.get(key);
-            if(overBitmap!=null){
-                mapLastUsege.remove(overBitmap.lastTimeUsage);
+            if(overBitmap != null){
+                mapLastUsage.remove(overBitmap.lastTimeUsage);
                 overBitmap.lastTimeUsage = System.nanoTime();
-                mapLastUsege.put(overBitmap.lastTimeUsage,key);
+                mapLastUsage.put(overBitmap.lastTimeUsage,key);
             }
-            return overBitmap!=null?overBitmap.bitmap:null;
+            return overBitmap != null ? overBitmap.bitmap : null;
         }
     }
 
@@ -75,7 +75,7 @@ public class LastUsageMemoryCache implements MemoryCache {
                 size -= sizeOf(previous.bitmap);
                 previous.bitmap.recycle();
                 previous.bitmap = null;
-                mapLastUsege.remove(previous.lastTimeUsage);
+                mapLastUsage.remove(previous.lastTimeUsage);
             }
             return null;
         }
@@ -95,7 +95,7 @@ public class LastUsageMemoryCache implements MemoryCache {
                 }
 
 
-                Map.Entry<Long, Integer> toEvict = mapLastUsege.firstEntry();
+                Map.Entry<Long, Integer> toEvict = mapLastUsage.firstEntry();
                 if (toEvict == null) {
                     break;
                 }
@@ -103,7 +103,7 @@ public class LastUsageMemoryCache implements MemoryCache {
                 value = map.get(key);
                 map.remove(key);
                 size -= sizeOf(value.bitmap);
-                mapLastUsege.remove(toEvict.getKey());
+                mapLastUsage.remove(toEvict.getKey());
                 if(value.bitmap != null){
                     value.bitmap.recycle();
                     value.bitmap = null;

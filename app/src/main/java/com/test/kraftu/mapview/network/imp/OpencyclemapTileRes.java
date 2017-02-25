@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class Opencyclemap implements TileResource {
+public class OpencyclemapTileRes implements TileResource {
     private static int READ_TIME_OUT = 4 * 1000;
     private static int TILE_SIZE_X = 256;
     private static int TILE_SIZE_Y = 256;

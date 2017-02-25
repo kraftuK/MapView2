@@ -213,7 +213,7 @@ public class MapView extends View implements TileManagerListener {
     }
 
     @Override
-    public void loadedNewTile(int tileId) {
+    public void loadedTile(int tileId) {
         postInvalidate();
     }
 }

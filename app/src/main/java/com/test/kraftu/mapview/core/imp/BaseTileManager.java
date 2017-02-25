@@ -10,11 +10,10 @@ import android.util.Log;
 import com.test.kraftu.mapview.cache.DiskCache;
 import com.test.kraftu.mapview.cache.MemoryCache;
 import com.test.kraftu.mapview.cache.imp.LastUsageMemoryCache;
-import com.test.kraftu.mapview.cache.imp.LruMemoryCache;
 import com.test.kraftu.mapview.cache.imp.UnlimitedDiskCache;
 import com.test.kraftu.mapview.core.TileManager;
 import com.test.kraftu.mapview.core.TileManagerListener;
-import com.test.kraftu.mapview.network.imp.Opencyclemap;
+import com.test.kraftu.mapview.network.imp.OpencyclemapTileRes;
 import com.test.kraftu.mapview.network.TileResource;
 import com.test.kraftu.mapview.utils.MapThreadFactory;
 
@@ -47,7 +46,7 @@ public class BaseTileManager implements TileManager {
     private HashMap<Integer,LoadBitmap> mListTask = new HashMap<>();
 
     public BaseTileManager(Context context) {
-        mTileRes = new Opencyclemap();
+        mTileRes = new OpencyclemapTileRes();
         mMemoryCache = new LastUsageMemoryCache(SIZE_MEMORY_CACHE);
         mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
         mExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
@@ -107,7 +106,7 @@ public class BaseTileManager implements TileManager {
 
     private void notifyLoadedNewTile(int idTile){
         TileManagerListener listener = mTileListenerRef.get();
-        if(listener != null) listener.loadedNewTile(idTile);
+        if(listener != null) listener.loadedTile(idTile);
     }
 
     private class LoadBitmap implements Runnable{
@@ -153,7 +152,7 @@ public class BaseTileManager implements TileManager {
                 }
 
                 if (mBitmap != null)
-                    addCacheMemotyAndNotify(tileId,mBitmap);
+                    addCacheTileAndNotify(tileId,mBitmap);
             }catch (Exception e){
                 if(DEBUG)Log.e(TAG, String.format("id:%d exc::%s", tileId, e.getMessage()));
             }finally {
@@ -161,7 +160,7 @@ public class BaseTileManager implements TileManager {
             }
 
         }
-        private void addCacheMemotyAndNotify(final Integer id,final Bitmap bitmap){
+        private void addCacheTileAndNotify(final Integer id, final Bitmap bitmap){
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {

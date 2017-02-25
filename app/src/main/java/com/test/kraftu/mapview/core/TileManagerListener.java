@@ -5,5 +5,5 @@ package com.test.kraftu.mapview.core;
  */
 
 public interface TileManagerListener{
-    void loadedNewTile(int idTile);
+    void loadedTile(int idTile);
 }
