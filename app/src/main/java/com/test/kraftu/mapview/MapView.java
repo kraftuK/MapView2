@@ -38,8 +38,6 @@ public class MapView extends View implements TileManagerListener {
     private int firstTileY;
     private float firstEdgeTileX;
     private float firstEdgeTileY;
-    int x;
-    int y;
 
     public MapView(Context context) {
         super(context);
@@ -61,6 +59,7 @@ public class MapView extends View implements TileManagerListener {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         frameRect = new RectF(0, 0, getMeasuredWidth(), getMeasuredHeight());
         log(String.format("vrect:%s srect%s", frameRect, sourceRect));
+        if(tileManager!=null) preDrawLocation();
     }
 
     public void init() {
@@ -89,6 +88,13 @@ public class MapView extends View implements TileManagerListener {
                 return true;
             }
         });
+        /*postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                setTranslate(-5,-5);
+                postDelayed(this,20);
+            }
+        },1000);*/
     }
 
     @Override
@@ -100,7 +106,7 @@ public class MapView extends View implements TileManagerListener {
         return true;
     }
 
-    public void setTranslate(float dx, float dy) {
+    public void setTranslate(float dx, float dy) { /*log(String.format("----")); log(String.format("dx:%f dy:%f",dx,dy));*/
         if (!frameRect.contains(sourceRect)) {
             sourceRect.left = sourceRect.left + dx;
             sourceRect.right = sourceRect.right + dx;
@@ -158,6 +164,8 @@ public class MapView extends View implements TileManagerListener {
         firstTileY = getTileRawY(0);
         firstEdgeTileX = getLocationTileX(firstTileX);
         firstEdgeTileY =  getLocationTileY(firstTileY);
+
+        tileManager.updateVisibleTile(firstTileX - 1, getTileRawX(frameRect.right) + 1, firstTileY - 1,getTileRawY(frameRect.bottom) + 1);
     }
     @Override
     protected void onDraw(Canvas canvas) {
@@ -174,6 +182,7 @@ public class MapView extends View implements TileManagerListener {
         float endTileX = Math.min(frameRect.right, sourceRect.right);
         float endTileY = Math.min(frameRect.bottom, sourceRect.bottom);
 
+
         while (startTileY < endTileY) {
             while (startTileX < endTileX) {
 
@@ -183,8 +192,8 @@ public class MapView extends View implements TileManagerListener {
 
                 if (DEBUG) {
                     canvas.drawRect(startTileX, startTileY, startTileX + tileSizeX, startTileY + tileSizeY, paint);
-                   // canvas.drawText(String.format("%d", tileManager.getTileId(currentTileX, currentTileY))
-                     //       , startTileX, startTileY - 10, paint);
+                    canvas.drawText(String.format("%d", tileManager.getTileId(currentTileX, currentTileY))
+                            ,startTileX, startTileY+20, paint);
                 }
 
                 currentTileX = currentTileX + 1;

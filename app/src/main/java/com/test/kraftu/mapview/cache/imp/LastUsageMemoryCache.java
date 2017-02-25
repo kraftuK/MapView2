@@ -40,9 +40,10 @@ public class LastUsageMemoryCache implements MemoryCache {
             mapLastUsage.put(overBitmap.lastTimeUsage,key);
             overBitmap = map.put(key, overBitmap);
             if (overBitmap != null) {
-                mapLastUsage.remove(overBitmap);
+                mapLastUsage.remove(overBitmap.lastTimeUsage);
                 size -= sizeOf(overBitmap.bitmap);
             }
+
         }
         trimToSize(maxSize);
         return true;
@@ -103,8 +104,10 @@ public class LastUsageMemoryCache implements MemoryCache {
                 key = toEvict.getValue();
                 value = map.get(key);
                 map.remove(key);
+
                 size -= sizeOf(value.bitmap);
                 mapLastUsage.remove(toEvict.getKey());
+
                 if(value.bitmap != null){
                     value.bitmap.recycle();
                     value.bitmap = null;
