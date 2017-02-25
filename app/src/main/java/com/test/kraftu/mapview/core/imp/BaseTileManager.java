@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 
 public class BaseTileManager implements TileManager {
     public static final int THREAD_POOL_SIZE = 2;
-    public static final int SIZE_MEMORY_CACHE = 20 * 1024 * 1024;
     public static final boolean DEBUG = false;
     public static final String TAG = "BaseTileManager";
 
@@ -44,20 +43,20 @@ public class BaseTileManager implements TileManager {
     private ExecutorService mExecutor;
     private HashMap<Integer,LoadBitmap> mListTask = new HashMap<>();
 
-    public BaseTileManager(Context context) {
+    public BaseTileManager(Context context, TileResource tileRes,
+                           MemoryCache memoryCache, DiskCache diskCache) {
         mExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
                 new MapThreadFactory(TAG + "_Thread"));
-
-        mTileRes = new OpenMapTileResource();
-        mMemoryCache = new LastUsageMemoryCache(SIZE_MEMORY_CACHE);
-        mDiskCache = new UnlimitedDiskCache(context.getCacheDir());
-;
+        mTileRes = tileRes;
+        mMemoryCache = memoryCache;
+        mDiskCache = diskCache;
     }
 
     @Override
     public void updateVisibleTile(int startX, int endX, int startY, int endY) {
         for(int i = startX; i <= endX; i++){
             for(int j = startY; j <= endY; j++){
+
                 Integer tileId = getTileId(i,j);
                 if(!mListTask.containsKey(tileId) &&
                         mMemoryCache.get(tileId) == null) startLoadTask(i,j);
@@ -68,13 +67,7 @@ public class BaseTileManager implements TileManager {
     @Override
     public Bitmap getBitmapTile(int tileX, int tileY) {
         Integer tileId = getTileId(tileX,tileY);
-        Bitmap bitmap = mMemoryCache.get(tileId);
-
-        if(bitmap == null && !mListTask.containsKey(tileId)){
-           // startLoadTask(tileX,tileY);
-        }
-
-        return bitmap;
+        return mMemoryCache.get(tileId);
     }
 
     @Override

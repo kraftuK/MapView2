@@ -17,7 +17,7 @@ import com.test.kraftu.mapview.core.TileManagerListener;
 import com.test.kraftu.mapview.core.imp.BaseTileManager;
 import com.test.kraftu.mapview.core.TileResource;
 
-public class MapView extends View implements TileManagerListener {
+public abstract class BaseMapView extends View implements TileManagerListener {
     public static final String TAG = "MapView";
     public static final boolean DEBUG = false;
 
@@ -40,20 +40,21 @@ public class MapView extends View implements TileManagerListener {
     private RectF mSourceRect = null;
     private RectF mFrameRect = null;
 
-    public MapView(Context context) {
+    public BaseMapView(Context context) {
         super(context);
         init();
     }
 
-    public MapView(Context context, AttributeSet attrs) {
+    public BaseMapView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public MapView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public BaseMapView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
+    public abstract TileManager getTileManager();
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -67,7 +68,7 @@ public class MapView extends View implements TileManagerListener {
 
     public void init() {
 
-        mTileManager = new BaseTileManager(getContext());
+        mTileManager = getTileManager();
         mTileManager.setTileManagerListener(this);
 
         TileResource tileResource = mTileManager.getTileDownloader();

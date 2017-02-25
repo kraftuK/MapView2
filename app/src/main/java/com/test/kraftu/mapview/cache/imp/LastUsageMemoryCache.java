@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 
 public class LastUsageMemoryCache implements MemoryCache {
+    public  static final int DEFAULT_SIZE = 20 * 1024 * 1024;
     private final LinkedHashMap<Integer, OverBitmap> mapBitmap;
     private final TreeMap<Long, Integer> mapLastUsage;
 
