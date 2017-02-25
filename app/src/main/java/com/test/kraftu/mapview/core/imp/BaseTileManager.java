@@ -10,6 +10,7 @@ import android.util.Log;
 import com.test.kraftu.mapview.cache.DiskCache;
 import com.test.kraftu.mapview.cache.MemoryCache;
 import com.test.kraftu.mapview.cache.imp.LastUsageMemoryCache;
+import com.test.kraftu.mapview.cache.imp.LruMemoryCache;
 import com.test.kraftu.mapview.cache.imp.UnlimitedDiskCache;
 import com.test.kraftu.mapview.core.TileManager;
 import com.test.kraftu.mapview.core.TileManagerListener;
@@ -23,6 +24,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
@@ -42,7 +44,7 @@ public class BaseTileManager implements TileManager {
 
     private Reference<TileManagerListener> mTileListenerRef;
 
-    private Executor mExecutor;
+    private ExecutorService mExecutor;
     private HashMap<Integer,LoadBitmap> mListTask = new HashMap<>();
 
     public BaseTileManager(Context context) {
@@ -69,7 +71,7 @@ public class BaseTileManager implements TileManager {
         Integer tileId = getTileId(tileX,tileY);
         LoadBitmap loadBitmap = new LoadBitmap(tileId,tileX,tileY);
         mListTask.put(tileId,loadBitmap);
-        mExecutor.execute(loadBitmap);
+        mExecutor.submit(loadBitmap);
         if(DEBUG) Log.d(TAG,String.format("Create %s",loadBitmap.toString()));
     }
 
