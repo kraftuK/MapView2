@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class BaseTileManager implements TileManager {
@@ -56,7 +57,6 @@ public class BaseTileManager implements TileManager {
     public void updateVisibleTile(int startX, int endX, int startY, int endY) {
         for(int i = startX; i <= endX; i++){
             for(int j = startY; j <= endY; j++){
-
                 Integer tileId = getTileId(i,j);
                 if(!mListTask.containsKey(tileId) &&
                         mMemoryCache.get(tileId) == null) startLoadTask(i,j);
@@ -126,8 +126,8 @@ public class BaseTileManager implements TileManager {
         private Integer tileX;
         private Integer tileY;
         private String url;
-        private boolean isCancel;
-        private Bitmap mBitmap;
+        private AtomicBoolean isCancel = new AtomicBoolean(false);
+        private Bitmap bitmap;
 
         public LoadBitmap(int tileId, int tileX, int tileY) {
             this.tileId = tileId;
@@ -145,25 +145,25 @@ public class BaseTileManager implements TileManager {
                 if (mDiskCache != null) {
                     File file = mDiskCache.get(url);
                     if (file.exists()) {
-                        mBitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                        bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
                         if(DEBUG)Log.d(TAG, String.format("id:%d from fromSd:%b",
-                                tileId, mBitmap!=null));
+                                tileId, bitmap!=null));
                     }
                 }
                 checkCancel();
 
                 //Try loadTile from tileSource and save sd cache
-                if (mBitmap == null) {
-                    mBitmap = mTileRes.loadTile(url);
+                if (bitmap == null) {
+                    bitmap = mTileRes.loadTile(url);
                     if(DEBUG)Log.d(TAG, String.format("id:%d from mTileRes:%b",
-                            tileId, mBitmap!=null));
-                    if (mBitmap != null && mDiskCache != null) {
-                        mDiskCache.save(url, mBitmap);
+                            tileId, bitmap!=null));
+                    if (bitmap != null && mDiskCache != null) {
+                        mDiskCache.save(url, bitmap);
                     }
                 }
 
-                if (mBitmap != null)
-                    addCacheTileAndNotify(tileId,mBitmap);
+                if (bitmap != null)
+                    addCacheTileAndNotify(tileId,bitmap);
             }catch (Exception e){
                 if(DEBUG)Log.e(TAG, String.format("id:%d exc::%s", tileId, e.getMessage()));
             }finally {
@@ -190,11 +190,11 @@ public class BaseTileManager implements TileManager {
             });
         }
         private void checkCancel() throws Exception{
-            if(isCancel) throw new Exception("TaskCancel");
+            if(isCancel.get()) throw new Exception("TaskCancel");
         }
 
         public void cancelTask() {
-            isCancel = true;
+            isCancel.set(true);
         }
         @Override
         public String toString() {
@@ -202,7 +202,7 @@ public class BaseTileManager implements TileManager {
                     "tileId=" + tileId +
                     ", url='" + url + '\'' +
                     ", isCancel=" + isCancel +
-                    ", bitmap=" + mBitmap +
+                    ", bitmap=" + bitmap +
                     '}';
         }
     }

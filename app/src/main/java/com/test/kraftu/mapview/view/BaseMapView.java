@@ -19,23 +19,23 @@ import com.test.kraftu.mapview.core.TileResource;
 public abstract class BaseMapView extends View implements TileManagerListener {
     public static final String TAG = "MapView";
     public static final boolean DEBUG = false;
-    private static final int EXTRA_COUNT_TILE = 1;
+    private static final int EXTRA_VISIBLE_COUNT_TILE = 1;
 
     private Paint mDebugPaint;
     private TileManager mTileManager;
     private GestureDetector mGestureDetector;
 
-    private int tileSizeX;
-    private int tileSizeY;
-    private int tileCountX;
-    private int tileCountY;
+    private int mTileWidth;
+    private int mTileHeight;
+    private int mTileCountColumn;
+    private int mTileCountRow;
 
-    private int firstVisibleColumn;
-    private int lastVisibleColumn;
-    private int firstVisibleRow;
-    private int lastVisibleRow;
+    private int mFirstVisibleColumn;
+    private int mLastVisibleColumn;
+    private int mFirstVisibleRow;
+    private int mLastVisibleRow;
 
-    private RectF firstRectDrawTile;
+    private RectF mFirstRectDrawTile;
 
     private RectF mSourceRect = null;
     private RectF mFrameRect = null;
@@ -76,15 +76,15 @@ public abstract class BaseMapView extends View implements TileManagerListener {
         if(tileResource == null)
             throw new IllegalArgumentException("TileResource not be null");
 
-        tileSizeX = tileResource.getWidthTile();
-        tileSizeY = tileResource.getHeightTile();
-        tileCountX = tileResource.getCountColumnTile();
-        tileCountY = tileResource.getCountRowTile();
+        mTileWidth = tileResource.getWidthTile();
+        mTileHeight = tileResource.getHeightTile();
+        mTileCountColumn = tileResource.getCountColumnTile();
+        mTileCountRow = tileResource.getCountRowTile();
 
-        if(tileSizeX <=0 || tileSizeY <=0 || tileCountX <=0 || tileCountY <= 0)
+        if(mTileWidth <=0 || mTileHeight <=0 || mTileCountColumn <=0 || mTileCountRow <= 0)
             throw new IllegalArgumentException("TileResource invalid tile settings");
 
-        mSourceRect = new RectF(0, 0, tileSizeX * tileCountX, tileSizeY * tileCountY);
+        mSourceRect = new RectF(0, 0, mTileWidth * mTileCountColumn, mTileHeight * mTileCountRow);
 
         mDebugPaint = new Paint();
         mDebugPaint.setColor(Color.BLACK);
@@ -106,7 +106,7 @@ public abstract class BaseMapView extends View implements TileManagerListener {
             }
         });
 
-        firstRectDrawTile = new RectF();
+        mFirstRectDrawTile = new RectF();
     }
 
     @Override
@@ -156,32 +156,42 @@ public abstract class BaseMapView extends View implements TileManagerListener {
     }
 
     public int getColumnTile(float screenX) {
-        return (int) (screenX - mSourceRect.left) / tileSizeX;
+        return (int) (screenX - mSourceRect.left) / mTileWidth;
     }
 
     public int getRowTile(float screenY) {
-        return (int) (screenY - mSourceRect.top) / tileSizeY;
+        return (int) (screenY - mSourceRect.top) / mTileHeight;
     }
 
     public RectF getFrameBoundsTile(RectF source, int raw, int column){
-        source.set(0, 0, tileSizeX, tileSizeY);
-        source.offsetTo(raw * tileSizeX + mSourceRect.left,
-                column * tileSizeY + mSourceRect.top);
+        source.set(0, 0, mTileWidth, mTileHeight);
+        source.offsetTo(raw * mTileWidth + mSourceRect.left,
+                column * mTileHeight + mSourceRect.top);
         return source;
     }
 
     protected void preLoadVisibleTile(){
-        firstVisibleColumn = getColumnTile(mFrameRect.left);
-        firstVisibleRow = getRowTile(mFrameRect.left);
-        lastVisibleColumn = getColumnTile(mFrameRect.right);
-        lastVisibleRow =  getRowTile(mFrameRect.bottom);
+        mFirstVisibleColumn = getColumnTile(mFrameRect.left);
+        mFirstVisibleRow = getRowTile(mFrameRect.left);
+        mLastVisibleColumn = getColumnTile(mFrameRect.right);
+        mLastVisibleRow =  getRowTile(mFrameRect.bottom);
 
-        firstRectDrawTile = getFrameBoundsTile(firstRectDrawTile, firstVisibleColumn, firstVisibleRow);
+        mFirstRectDrawTile = getFrameBoundsTile(mFirstRectDrawTile,
+                mFirstVisibleColumn, mFirstVisibleRow);
 
-        mTileManager.updateVisibleTile(firstVisibleColumn - EXTRA_COUNT_TILE,
-                lastVisibleColumn + EXTRA_COUNT_TILE,
-                firstVisibleRow - EXTRA_COUNT_TILE,
-                lastVisibleRow + EXTRA_COUNT_TILE);
+        int startColumn = mFirstVisibleColumn - EXTRA_VISIBLE_COUNT_TILE;
+        if(startColumn < 0) startColumn = 0;
+
+        int endColumn =  mLastVisibleColumn + EXTRA_VISIBLE_COUNT_TILE;
+        if(endColumn >= mTileCountColumn) endColumn =  mTileCountColumn - 1;
+
+        int startRow = mFirstVisibleRow - EXTRA_VISIBLE_COUNT_TILE;
+        if(startRow < 0) startRow = 0;
+
+        int endRow = mLastVisibleRow + EXTRA_VISIBLE_COUNT_TILE;
+        if(endRow >= mTileCountRow) endRow = mTileCountRow - 1;
+
+        mTileManager.updateVisibleTile(startColumn, endColumn, startRow, endRow);
     }
     @Override
     protected void onDraw(Canvas canvas) {
@@ -191,11 +201,11 @@ public abstract class BaseMapView extends View implements TileManagerListener {
 
         Bitmap tileBitmap = null;
 
-        int columnTile = firstVisibleColumn;
-        int rowTileY = firstVisibleRow;
+        int columnTile = mFirstVisibleColumn;
+        int rowTileY = mFirstVisibleRow;
 
-        float startDrawX = firstRectDrawTile.left;
-        float startDrawY = firstRectDrawTile.top;
+        float startDrawX = mFirstRectDrawTile.left;
+        float startDrawY = mFirstRectDrawTile.top;
 
         float endDrawX = Math.min(mFrameRect.right, mSourceRect.right);
         float endDrawY = Math.min(mFrameRect.bottom, mSourceRect.bottom);
@@ -212,20 +222,20 @@ public abstract class BaseMapView extends View implements TileManagerListener {
                 if (DEBUG) {
                     Integer tileId = mTileManager.getTileId(columnTile, rowTileY);
                     canvas.drawRect(startDrawX, startDrawY,
-                            startDrawX + tileSizeX, startDrawY + tileSizeY, mDebugPaint);
+                            startDrawX + mTileWidth, startDrawY + mTileHeight, mDebugPaint);
                     canvas.drawText(String.format("%d", tileId),
                             startDrawX, startDrawY + 20, mDebugPaint);
                 }
 
                 columnTile += 1;
-                startDrawX = startDrawX + tileSizeX;
+                startDrawX = startDrawX + mTileWidth;
             }
 
-            columnTile = this.firstVisibleColumn;
+            columnTile = this.mFirstVisibleColumn;
             rowTileY += 1;
 
-            startDrawX = firstRectDrawTile.left;
-            startDrawY = startDrawY + tileSizeY;
+            startDrawX = mFirstRectDrawTile.left;
+            startDrawY = startDrawY + mTileHeight;
         }
 
     }
